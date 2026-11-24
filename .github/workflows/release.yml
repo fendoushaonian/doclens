@@ -93,6 +93,33 @@ jobs:
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
 
+  publish-registry:
+    name: 发布到官方 MCP Registry
+    # 只依赖 build：PyPI 未开通前 publish 会失败，不能让 Registry 收录被它拖住。
+    # 镜像那条也独立跑，两边谁先成功都不影响对方。
+    needs: build
+    runs-on: ubuntu-latest
+    # 用 GitHub OIDC 证明仓库身份，不需要任何交互式登录或长期密钥。
+    # Registry 靠这个确认发布者确实控制着 server.json 里声明的那个 GitHub 仓库。
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 mcp-publisher
+        run: |
+          curl -sL -o mp.tar.gz \
+            "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.16/mcp-publisher_linux_amd64.tar.gz"
+          tar -xzf mp.tar.gz mcp-publisher
+      - name: OIDC 登录
+        run: ./mcp-publisher login github-oidc
+      - name: 校验 server.json
+        run: ./mcp-publisher validate
+      - name: 发布
+        # 同一版本重复发布会让整个 job 失败；--skip-existing 让重跑 tag
+        # 变得安全，只更新不冲突的部分。
+        run: ./mcp-publisher publish --skip-existing
+
   publish-image:
     name: 发布容器镜像到 GHCR
     needs: build
