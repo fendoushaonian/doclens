@@ -1,0 +1,63 @@
+[project]
+name = "doclens-mcp"
+version = "0.1.0"
+description = "High-fidelity document reader for AI coding agents: PDF, Excel, Word, CSV with table structure and numeric precision preserved"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Mr. Day One" }]
+keywords = ["mcp", "pdf", "excel", "llm", "ai-agent", "document-parsing"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Text Processing",
+]
+
+dependencies = [
+    "mcp>=2.0",
+    "pdfplumber>=0.11",
+    "openpyxl>=3.1",
+    "python-docx>=1.2",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "reportlab>=4"]
+
+[project.scripts]
+doclens = "doclens.server:main"
+
+[project.urls]
+Repository = "https://github.com/fendoushaonian/doclens"
+Issues = "https://github.com/fendoushaonian/doclens/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["doclens"]
+
+# 构建发行包时只带源码和必要的说明文件。
+# .mrdayone 里有 IDE 的本地状态和配置备份，fixtures 是测试样本，
+# 两者都不该进发行包——前者会泄露本机账号信息，后者是体积垃圾。
+[tool.hatch.build.targets.sdist]
+include = [
+    "doclens/**/*.py",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]
+exclude = [
+    "/.mrdayone",
+    "/fixtures",
+    "/.venv",
+    "/dist",
+    "/.pytest_cache",
+    "/tests",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# 本地 IDE / 助手状态（含配置备份，绝不能进仓库）
+.mrdayone/
+
+# 测试样本会随仓库发出去吗？不会——但也不该被当成源码
+fixtures/*.pdf
+fixtures/*.xlsx
+fixtures/*.docx
+
+# 系统
+.DS_Store
