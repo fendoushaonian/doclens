@@ -1,0 +1,14 @@
+# Glama 的仓库元数据。
+#
+# Glama 靠这个文件确认谁有权维护这个 listing，以及用什么分类展示。
+# 没有它，别人也能提交同一个仓库，认领起来会麻烦。
+# 文档：https://glama.ai/mcp/methodology
+
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": [
+    "fendoushaonian"
+  ],
+  "name": "DocLens",
+  "description": "High-fidelity document reader for AI coding agents: PDF, Excel, Word and CSV with table structure and numeric precision preserved."
+}
