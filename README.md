@@ -2,6 +2,9 @@
 
 **给 AI 编程 agent 的高保真文档读取器。**
 
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-active-brightgreen)](https://registry.modelcontextprotocol.io/v0/servers?search=doclens)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Claude Code、Codex、Cursor 这类 agent 读 PDF 和 Excel 时会出错，而且错得很安静：表格被压成一条文本流，列关系丢失；金额经过 float 往返，精度掉了；多栏排版的左右栏交错读出；扫描件被当成空文档。
 
 DocLens 是一个 MCP 服务，把这些读完再交给 agent——**表格按行列对齐，金额保留原始精度，公式单独标出，有损的地方明确告诉你**。
