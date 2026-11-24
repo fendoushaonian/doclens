@@ -53,6 +53,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
+      # 必须 checkout：下面要跑 scripts/smoke_test.py，artifact 里只有 dist，
+      # 没有仓库文件。少了这步，三平台都会报 No such file or directory。
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: dist
