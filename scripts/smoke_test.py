@@ -4,8 +4,8 @@
 `python - <<'PY'` 这种 POSIX heredoc 会直接语法错误。写成文件后三种平台
 都用同一条命令 `python scripts/smoke_test.py`，没有 shell 方言问题。
 
-也能本地直接跑：
-    .venv/bin/python scripts/smoke_test.py
+输出刻意只用 ASCII：Windows 控制台默认 cp1252，打印中文会抛
+UnicodeEncodeError 直接让进程失败——那会让一次正常的检查变成假故障。
 """
 
 from __future__ import annotations
@@ -28,24 +28,27 @@ EXPECTED = {
 
 async def main() -> int:
     # 用 PATH 里的 doclens：CI 刚 pip 装完，这是用户真实拿到的入口。
-    # 在 Windows 上 py 启动器装出来的可能是 doclens.exe，shutil.which 两者都能找到。
+    # Windows 上装出来的是 doclens.exe，shutil.which 会自动处理后缀。
     binary = shutil.which("doclens")
     if binary is None:
-        print("找不到 doclens 命令，安装可能没成功", file=sys.stderr)
+        print("FAIL: doclens command not found on PATH", file=sys.stderr)
         return 1
-    print(f"使用入口：{binary}")
+    # 用 ascii 安全的方式打印路径：路径本身可能含非 ASCII（比如中文用户名）
+    print("entry:", binary.encode("ascii", "backslashreplace").decode())
 
     async with Client(StdioServerParameters(command=binary, args=[])) as client:
         tools = await client.list_tools()
         names = {t.name for t in tools.tools}
-        print(f"发现 {len(names)} 个工具：{sorted(names)}")
+        print(f"tools found: {len(names)}")
+        for name in sorted(names):
+            print("  -", name)
 
         missing = EXPECTED - names
         if missing:
-            print(f"缺少工具：{sorted(missing)}", file=sys.stderr)
+            print(f"FAIL: missing tools {sorted(missing)}", file=sys.stderr)
             return 1
 
-    print("握手成功，全部工具齐全")
+    print("OK: handshake succeeded, all tools present")
     return 0
 
 

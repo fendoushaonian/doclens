@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -310,7 +311,22 @@ def compare_extraction(
 
 
 def main() -> None:
-    """stdio 入口。宿主 agent 会以子进程方式拉起它。"""
+    """stdio 入口。宿主 agent 会以子进程方式拉起它。
+
+    Windows 控制台的默认编码是 cp1252，遇到中文会抛 UnicodeEncodeError，
+    而 MCP 服务在 stdio 上一崩就等于整个工具不可用。这里把标准流重配成
+    UTF-8，并允许编码失败时替换而不是抛异常——宁可少一个字符，也不能
+    让进程直接死掉。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):
+                # 流可能已被重定向且不支持重配；忽略即可，不影响协议本身。
+                pass
+
     server.run(transport="stdio")
 
 
