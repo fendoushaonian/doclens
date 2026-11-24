@@ -13,6 +13,11 @@
 
 FROM python:3.12-slim
 
+# 官方 MCP Registry 要求 OCI 镜像带这个标签，用来把镜像和 server.json 里的
+# name 绑在一起。没有它，publish 会被 400 拒绝：Registry 无法确认这个镜像
+# 确实属于声明它的那个 server。
+LABEL io.modelcontextprotocol.server.name="io.github.fendoushaonian/doclens"
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_SYSTEM_PYTHON=1 \
