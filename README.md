@@ -50,6 +50,25 @@ cd doclens
 pip install -e ".[dev]"
 ```
 
+用容器运行（镜像已公开发布，匿名可拉）：
+
+```bash
+docker run -i --rm ghcr.io/fendoushaonian/doclens:latest
+```
+
+在 MCP 宿主里用镜像，把 `command` 换成：
+
+```json
+{
+  "mcpServers": {
+    "doclens": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "ghcr.io/fendoushaonian/doclens:latest"]
+    }
+  }
+}
+```
+
 ## 接入 agent
 
 ### Claude Code
