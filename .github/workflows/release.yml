@@ -95,9 +95,11 @@ jobs:
 
   publish-registry:
     name: 发布到官方 MCP Registry
-    # 只依赖 build：PyPI 未开通前 publish 会失败，不能让 Registry 收录被它拖住。
-    # 镜像那条也独立跑，两边谁先成功都不影响对方。
-    needs: build
+    # 必须等镜像推完：Registry 会去 GHCR 拉取并校验 OCI 标签，
+    # 镜像还没到就返回 400「missing required annotation」，
+    # 那不是标签写错，而是检查得太早。
+    # 但不能挂到 publish（PyPI）上——那条在开通前一直失败。
+    needs: [build, publish-image]
     runs-on: ubuntu-latest
     # 用 GitHub OIDC 证明仓库身份，不需要任何交互式登录或长期密钥。
     # Registry 靠这个确认发布者确实控制着 server.json 里声明的那个 GitHub 仓库。
