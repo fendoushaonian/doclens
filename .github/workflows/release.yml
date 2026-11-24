@@ -61,10 +61,12 @@ jobs:
         with:
           python-version: "3.12"
       # 装 wheel 而不是源码目录：这才是用户真正拿到的东西。
+      # 不用 dist/*.whl —— PowerShell 不展开通配符，会把 * 当成字面量传给 pip。
+      # 也不用 --no-index：那样依赖（mcp 等）也找不到，安装会失败。
       - name: 从 wheel 安装
         run: |
           python -m pip install --upgrade pip
-          python -m pip install dist/*.whl
+          python -m pip install --find-links dist doclens-mcp
       - name: 确认命令可用且能完成 MCP 握手
         run: |
           python - <<'PY'
