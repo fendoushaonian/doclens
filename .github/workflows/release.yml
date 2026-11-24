@@ -68,28 +68,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --find-links dist doclens-mcp
       - name: 确认命令可用且能完成 MCP 握手
-        run: |
-          python - <<'PY'
-          import asyncio, sys
-          from mcp import Client, StdioServerParameters
-
-          async def main():
-              params = StdioServerParameters(command="doclens", args=[])
-              async with Client(params) as client:
-                  tools = await client.list_tools()
-                  names = {t.name for t in tools.tools}
-                  expected = {
-                      "list_documents", "read_document", "search_document",
-                      "extract_table", "inspect_document", "compare_extraction",
-                  }
-                  missing = expected - names
-                  if missing:
-                      print("缺少工具：", missing)
-                      sys.exit(1)
-                  print("握手成功，6 个工具齐全")
-
-          asyncio.run(main())
-          PY
+        # 用脚本文件而不是 heredoc：Windows runner 是 PowerShell，
+        # `python - <<'PY'` 那种 POSIX 写法会直接语法错误。
+        run: python scripts/smoke_test.py
 
   publish:
     name: 发布到 PyPI
@@ -108,3 +89,46 @@ jobs:
           name: dist
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-image:
+    name: 发布容器镜像到 GHCR
+    needs: build
+    runs-on: ubuntu-latest
+    # 镜像与 PyPI 是两条独立的发布路径：官方 MCP Registry 接受 OCI 镜像，
+    # 所以在 PyPI 尚未开通时，这条能让 DocLens 被 Registry 和目录站收录。
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/doclens
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=edge,branch=main
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # 构建完立刻验证：镜像能启动并列出工具，否则推上去也是坏的。
+      - name: 验证镜像能响应 MCP 握手
+        run: |
+          IMAGE="ghcr.io/${{ github.repository_owner }}/doclens:${{ steps.meta.outputs.version }}"
+          docker run --rm -i "${IMAGE}" --help >/dev/null 2>&1 || true
+          docker run --rm -i "${IMAGE}" <<'EOF' | head -5
+          {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2026-07-28","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}
+          EOF
